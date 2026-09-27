@@ -53,3 +53,17 @@ describe('parseCard', () => {
     expect(card.art).toEqual({ src: 'data:x', x: 0, y: 0, scale: 1 });
   });
 });
+
+describe('parseCard のキラ加工', () => {
+  it('キラ加工のない古い保存データは「なし」になる', () => {
+    expect(parseCard({ name: 'ゴースト' }).holo).toEqual(createCard().holo);
+  });
+
+  it('不正な値は補正し、強さは 0〜1 に収める', () => {
+    expect(parseCard({ holo: { style: 'cosmos', area: 'x', intensity: 5 } }).holo).toEqual({
+      style: 'cosmos',
+      area: 'art',
+      intensity: 1,
+    });
+  });
+});

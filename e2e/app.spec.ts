@@ -81,3 +81,18 @@ test('ダブルクリックでカードを裏返せる', async ({ page }) => {
   await expect(flip).not.toHaveClass(/flipped/);
   await expect(button).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('キラ加工をかけられる', async ({ page }) => {
+  await page.getByRole('tab', { name: '画像' }).click();
+  await expect(page.getByTestId('holo-shine')).toHaveCount(0);
+  await page.waitForTimeout(500);
+  const before = await canvasData(page);
+
+  await page.getByLabel('模様').selectOption({ label: 'コスモ（★neo風）' });
+  await expect(page.getByTestId('holo-shine')).toBeAttached();
+  await expect.poll(() => canvasData(page)).not.toBe(before);
+
+  await page.getByLabel('範囲').selectOption({ label: 'カード全体' });
+  await page.getByLabel('模様').selectOption({ label: 'なし' });
+  await expect(page.getByTestId('holo-shine')).toHaveCount(0);
+});

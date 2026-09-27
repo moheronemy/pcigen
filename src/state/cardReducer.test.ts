@@ -35,3 +35,10 @@ describe('cardReducer', () => {
     expect(card.art.scale).toBe(MAX_ART_SCALE);
   });
 });
+
+describe('cardReducer のキラ加工', () => {
+  it('キラ加工の設定を部分的に変えられる', () => {
+    const card = cardReducer(createCard(), { type: 'setHolo', patch: { style: 'swirl' } });
+    expect(card.holo).toMatchObject({ style: 'swirl', area: 'art' });
+  });
+});

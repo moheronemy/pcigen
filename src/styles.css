@@ -117,6 +117,57 @@ body {
   user-select: none;
 }
 
+/* キラ加工のプレビュー：マウスの位置（--mx, --my）に合わせて傾け、虹色の反射を動かす */
+.card-tilt {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.2s ease-out;
+}
+
+.holo-shine {
+  grid-area: 1 / 1;
+  pointer-events: none;
+  backface-visibility: hidden;
+  border-radius: 5% / 3.57%;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  background:
+    radial-gradient(
+      circle at var(--mx, 50%) var(--my, 30%),
+      rgb(255 255 255 / 0.6),
+      transparent 45%
+    ),
+    repeating-linear-gradient(
+      115deg,
+      hsl(0 100% 70%) 0%,
+      hsl(55 100% 70%) 4%,
+      hsl(120 100% 70%) 8%,
+      hsl(185 100% 70%) 12%,
+      hsl(250 100% 72%) 16%,
+      hsl(310 100% 70%) 20%,
+      hsl(360 100% 70%) 24%
+    );
+  background-size:
+    100% 100%,
+    300% 300%;
+  background-position:
+    center,
+    var(--mx, 50%) var(--my, 50%);
+  mix-blend-mode: color-dodge;
+  opacity: calc(var(--holo-intensity) * 0.25);
+  transition: opacity 0.3s;
+}
+
+.card-tilt.hovering .holo-shine {
+  opacity: calc(var(--holo-intensity) * 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-tilt {
+    transform: none;
+  }
+}
+
 /* 見えていない面はクリックやドラッグを受け取らない */
 .card-flip:not(.flipped) > .card-back,
 .card-flip.flipped > canvas {
