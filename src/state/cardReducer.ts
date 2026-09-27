@@ -6,6 +6,7 @@ import {
   MAX_MOVES,
   normalizeCard,
   type Artwork,
+  type Holo,
   type CardData,
   type EnergyType,
   type Move,
@@ -29,6 +30,7 @@ export type CardAction =
   | { type: 'moveArt'; key: ArtKey; dx: number; dy: number }
   | { type: 'zoomArt'; key: ArtKey; factor: number }
   | { type: 'clearArt'; key: ArtKey }
+  | { type: 'setHolo'; patch: Partial<Holo> }
   | { type: 'replace'; card: CardData }
   | { type: 'reset' };
 
@@ -69,6 +71,8 @@ export const cardReducer = (card: CardData, action: CardAction): CardData => {
     }
     case 'clearArt':
       return { ...card, [action.key]: emptyArtwork() };
+    case 'setHolo':
+      return { ...card, holo: { ...card.holo, ...action.patch } };
     case 'replace':
       return action.card;
     case 'reset':

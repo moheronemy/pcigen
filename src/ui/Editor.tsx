@@ -2,6 +2,10 @@ import { useState, type Dispatch } from 'react';
 import { POKEMON_NAMES } from '../data/pokemonNames';
 import {
   availableTypes,
+  HOLO_AREA_LABELS,
+  HOLO_AREAS,
+  HOLO_STYLE_LABELS,
+  HOLO_STYLES,
   MAX_MOVES,
   MAX_RETREAT,
   RARITIES,
@@ -276,6 +280,51 @@ export const Editor = ({ card, dispatch }: Props) => {
               onChange={(patch) => dispatch({ type: 'setArt', key: 'art', patch })}
               onClear={() => dispatch({ type: 'clearArt', key: 'art' })}
             />
+            <fieldset className="holo-input">
+              <legend>キラ加工</legend>
+              <div className="grid-2">
+                <Select
+                  label="模様"
+                  value={card.holo.style}
+                  options={HOLO_STYLES.map((v) => ({ value: v, label: HOLO_STYLE_LABELS[v] }))}
+                  onChange={(style) => dispatch({ type: 'setHolo', patch: { style } })}
+                />
+                {card.holo.style !== 'none' && (
+                  <Select
+                    label="範囲"
+                    value={card.holo.area}
+                    options={HOLO_AREAS.map((v) => ({ value: v, label: HOLO_AREA_LABELS[v] }))}
+                    onChange={(area) => dispatch({ type: 'setHolo', patch: { area } })}
+                  />
+                )}
+              </div>
+              {card.holo.style !== 'none' && (
+                <>
+                  <label className="field">
+                    <span className="field-label">
+                      強さ {Math.round(card.holo.intensity * 100)}%
+                    </span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={card.holo.intensity}
+                      onChange={(e) =>
+                        dispatch({
+                          type: 'setHolo',
+                          patch: { intensity: Number(e.target.value) },
+                        })
+                      }
+                    />
+                  </label>
+                  <p className="muted">
+                    プレビューにマウスを乗せると、傾きに合わせて光り方が変わります。保存する PNG
+                    には止まった状態の模様が入ります。
+                  </p>
+                </>
+              )}
+            </fieldset>
             {evolved && (
               <ImageInput
                 label="進化前のポケモン"

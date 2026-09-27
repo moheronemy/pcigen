@@ -1,6 +1,7 @@
 import type { Layout, Rect, TextBox, IconSlot } from '../layout/layout';
 import { ENERGY_TYPES, type Artwork, type CardData, type EnergyType } from '../model/card';
 import type { ImageMap } from './assets';
+import { drawHolo } from './holo';
 import { wrapText } from './text';
 
 export const CARD_WIDTH = 400;
@@ -227,6 +228,8 @@ export const renderCard = (
   ctx.fillStyle = '#fff';
   ctx.fillRect(win.x, win.y, win.w, win.h);
   if (images.art) drawArtwork(ctx, images.art, win, card.art, 'rect');
+  // イラストだけのキラは枠より下に、それ以外は枠の上（文字の下）にかける
+  if (card.holo.area === 'art') drawHolo(ctx, card.holo, win);
 
   const frame = assets[layout.frame];
   if (frame) ctx.drawImage(frame, 0, 0, CARD_WIDTH, CARD_HEIGHT);
@@ -237,6 +240,7 @@ export const renderCard = (
   if (layout.evoWindow && images.evoArt) {
     drawArtwork(ctx, images.evoArt, layout.evoWindow, card.evoArt, layout.evoWindow.shape);
   }
+  if (card.holo.area !== 'art') drawHolo(ctx, card.holo, win);
 
   ctx.fillStyle = layout.textColor;
   const sprite = assets.sprite;

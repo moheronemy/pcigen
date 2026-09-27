@@ -46,6 +46,34 @@ export const ENERGY_LABELS: Record<EnergyType, string> = {
 export const RARITIES = ['', '●', '◆', '★', '★★★'] as const;
 export type Rarity = (typeof RARITIES)[number];
 
+/** キラ加工の模様 */
+export const HOLO_STYLES = ['none', 'swirl', 'cosmos', 'rainbow'] as const;
+export type HoloStyle = (typeof HOLO_STYLES)[number];
+
+export const HOLO_STYLE_LABELS: Record<HoloStyle, string> = {
+  none: 'なし',
+  swirl: '渦巻き（初代風）',
+  cosmos: 'コスモ（★neo風）',
+  rainbow: '虹色ストライプ',
+};
+
+/** キラ加工をかける範囲 */
+export const HOLO_AREAS = ['art', 'frame', 'full'] as const;
+export type HoloArea = (typeof HOLO_AREAS)[number];
+
+export const HOLO_AREA_LABELS: Record<HoloArea, string> = {
+  art: 'イラストだけ',
+  frame: 'イラスト以外（リバースホロ）',
+  full: 'カード全体',
+};
+
+export interface Holo {
+  style: HoloStyle;
+  area: HoloArea;
+  /** 0〜1 */
+  intensity: number;
+}
+
 export const MAX_MOVES = 2;
 export const MAX_RETREAT = 4;
 export const MAX_COST = 4;
@@ -87,11 +115,14 @@ export interface CardData {
   rarity: Rarity;
   art: Artwork;
   evoArt: Artwork;
+  holo: Holo;
 }
 
 export const emptyMove = (): Move => ({ name: '', damage: '', text: '', cost: [] });
 
 export const emptyArtwork = (): Artwork => ({ src: null, x: 0, y: 0, scale: 1 });
+
+export const defaultHolo = (): Holo => ({ style: 'none', area: 'art', intensity: 0.5 });
 
 export const createCard = (): CardData => ({
   series: 'base',
@@ -115,6 +146,7 @@ export const createCard = (): CardData => ({
   rarity: '',
   art: emptyArtwork(),
   evoArt: emptyArtwork(),
+  holo: defaultHolo(),
 });
 
 /** 初代（base）には悪・鋼タイプが存在しない */
@@ -150,6 +182,20 @@ const parseArtwork = (v: unknown): Artwork => {
     x: num(o.x, 0),
     y: num(o.y, 0),
     scale: num(o.scale, 1),
+  };
+};
+
+const parseHolo = (v: unknown): Holo => {
+  const o = (v ?? {}) as Record<string, unknown>;
+  const base = defaultHolo();
+  const intensity =
+    typeof o.intensity === 'number' && Number.isFinite(o.intensity)
+      ? Math.min(1, Math.max(0, o.intensity))
+      : base.intensity;
+  return {
+    style: pick(HOLO_STYLES, o.style, base.style),
+    area: pick(HOLO_AREAS, o.area, base.area),
+    intensity,
   };
 };
 
@@ -192,5 +238,6 @@ export const parseCard = (input: unknown): CardData => {
     rarity: pick(RARITIES, o.rarity, base.rarity),
     art: parseArtwork(o.art),
     evoArt: parseArtwork(o.evoArt),
+    holo: parseHolo(o.holo),
   });
 };

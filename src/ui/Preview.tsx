@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState, type Dispatch } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type PointerEvent,
+} from 'react';
 import cardBackUrl from '../assets/card/pcardback.jpg';
 import { getLayout } from '../layout/layout';
 import type { CardData } from '../model/card';
 import { drawCard, prepareCard } from '../render/draw';
+import { holoPath } from '../render/holo';
 import { CARD_HEIGHT, CARD_WIDTH } from '../render/renderCard';
 import type { CardAction } from '../state/cardReducer';
 
@@ -69,50 +77,96 @@ export const Preview = ({ card, dispatch }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
+  const tiltRef = useRef<HTMLDivElement>(null);
+  const holoOn = card.holo.style !== 'none' && card.holo.intensity > 0;
+
+  /** マウスの位置に合わせて、カードを少し傾けて光の当たり方を動かす */
+  const onTilt = (e: PointerEvent<HTMLDivElement>) => {
+    const el = tiltRef.current;
+    if (!el || !holoOn || flipped || e.pointerType === 'touch') return;
+    const rect = el.getBoundingClientRect();
+    const px = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const py = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+    el.style.setProperty('--mx', `${px * 100}%`);
+    el.style.setProperty('--my', `${py * 100}%`);
+    // ドラッグ中は傾けない（位置合わせがずれるため）
+    const tilt = drag.current ? 0 : 1;
+    el.style.setProperty('--rx', `${(0.5 - py) * 14 * tilt}deg`);
+    el.style.setProperty('--ry', `${(px - 0.5) * 14 * tilt}deg`);
+    el.classList.add('hovering');
+  };
+
+  const onTiltEnd = () => {
+    const el = tiltRef.current;
+    if (!el) return;
+    for (const v of ['--mx', '--my', '--rx', '--ry']) el.style.removeProperty(v);
+    el.classList.remove('hovering');
+  };
+
+  const holoMask = `url("data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${CARD_WIDTH} ${CARD_HEIGHT}' preserveAspectRatio='none'><path fill='white' fill-rule='evenodd' d='${holoPath(card.holo.area, getLayout(card).artWindow)}'/></svg>`,
+  )}")`;
+
   return (
     <div className="preview">
-      <div
-        className={`card-flip${flipped ? ' flipped' : ''}`}
-        data-testid="card-flip"
-        onDoubleClick={() => setFlipped((f) => !f)}
-      >
-        <canvas
-          ref={canvasRef}
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
-          className={card.art.src ? 'draggable' : undefined}
-          role="img"
-          aria-label={`カードのプレビュー${card.name ? `：${card.name}` : ''}`}
-          data-testid="card-canvas"
-          onPointerDown={(e) => {
-            if (!inArtWindow(e.clientX, e.clientY)) return;
-            e.currentTarget.setPointerCapture(e.pointerId);
-            drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
-          }}
-          onPointerMove={(e) => {
-            const d = drag.current;
-            if (!d || d.id !== e.pointerId) return;
-            const { k } = toCard(e.clientX, e.clientY);
-            dispatch({
-              type: 'moveArt',
-              key: 'art',
-              dx: (e.clientX - d.x) * k,
-              dy: (e.clientY - d.y) * k,
-            });
-            drag.current = { ...d, x: e.clientX, y: e.clientY };
-          }}
-          onPointerUp={() => (drag.current = null)}
-          onPointerCancel={() => (drag.current = null)}
-        />
-        <img
-          className="card-back"
-          src={cardBackUrl}
-          alt="カードの裏面"
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
-          draggable={false}
-          aria-hidden={!flipped}
-        />
+      <div ref={tiltRef} className="card-tilt" onPointerMove={onTilt} onPointerLeave={onTiltEnd}>
+        <div
+          className={`card-flip${flipped ? ' flipped' : ''}`}
+          data-testid="card-flip"
+          onDoubleClick={() => setFlipped((f) => !f)}
+        >
+          <canvas
+            ref={canvasRef}
+            width={CARD_WIDTH}
+            height={CARD_HEIGHT}
+            className={card.art.src ? 'draggable' : undefined}
+            role="img"
+            aria-label={`カードのプレビュー${card.name ? `：${card.name}` : ''}`}
+            data-testid="card-canvas"
+            onPointerDown={(e) => {
+              if (!inArtWindow(e.clientX, e.clientY)) return;
+              e.currentTarget.setPointerCapture(e.pointerId);
+              drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+            }}
+            onPointerMove={(e) => {
+              const d = drag.current;
+              if (!d || d.id !== e.pointerId) return;
+              const { k } = toCard(e.clientX, e.clientY);
+              dispatch({
+                type: 'moveArt',
+                key: 'art',
+                dx: (e.clientX - d.x) * k,
+                dy: (e.clientY - d.y) * k,
+              });
+              drag.current = { ...d, x: e.clientX, y: e.clientY };
+            }}
+            onPointerUp={() => (drag.current = null)}
+            onPointerCancel={() => (drag.current = null)}
+          />
+          {holoOn && (
+            <div
+              className="holo-shine"
+              data-testid="holo-shine"
+              aria-hidden
+              style={
+                {
+                  '--holo-intensity': card.holo.intensity,
+                  maskImage: holoMask,
+                  WebkitMaskImage: holoMask,
+                } as CSSProperties
+              }
+            />
+          )}
+          <img
+            className="card-back"
+            src={cardBackUrl}
+            alt="カードの裏面"
+            width={CARD_WIDTH}
+            height={CARD_HEIGHT}
+            draggable={false}
+            aria-hidden={!flipped}
+          />
+        </div>
       </div>
       <button
         type="button"
