@@ -80,20 +80,65 @@ body {
   }
 }
 
-.preview canvas {
+/* カードの裏返し：おもて（canvas）とうら（img）を重ね、Y 軸で180度回す */
+.preview {
+  perspective: 1400px;
+}
+
+.card-flip {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.card-flip.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-flip > canvas,
+.card-flip > .card-back {
+  grid-area: 1 / 1;
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 400 / 560;
-  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.35));
+  /* 枠画像の角の丸み（400×560 で半径およそ20px）に合わせる */
+  border-radius: 5% / 3.57%;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  backface-visibility: hidden;
+}
+
+.card-flip > canvas {
   touch-action: none;
 }
 
-.preview canvas.draggable {
+.card-flip > .card-back {
+  transform: rotateY(180deg);
+  user-select: none;
+}
+
+/* 見えていない面はクリックやドラッグを受け取らない */
+.card-flip:not(.flipped) > .card-back,
+.card-flip.flipped > canvas {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-flip {
+    transition: none;
+  }
+}
+
+.flip-button {
+  display: block;
+  margin: 10px auto 0;
+}
+
+.card-flip > canvas.draggable {
   cursor: grab;
 }
 
-.preview canvas.draggable:active {
+.card-flip > canvas.draggable:active {
   cursor: grabbing;
 }
 
