@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style type="text/css">
+        article, aside, details, figcaption, figure,
+        footer, header, hgroup, nav, section, summary {
+            display: block;
+        }
+        body{
+            background-color: #333;
+        }
+        header{
+            height: 35px;
+            background-color: teal;
+        }
+        .clearfix::before
+        .clearfix::after
+        {
+            content: " ";
+            display: table;
+        }
+        .clearfix::after{
+            clear: both;
+        }
+        .constrain{
+            max-width: 1240px;
+        }
+        #container{
+            background: #2269ad;
+            height: 4500px;
+        }
+        li{
+            list-style: outside none none;
+        }
+        #content{
+            float: right;
+            width: 70%;
+            height: 4243px;
+            background: greenyellow;
+        }
+        #logo{
+            background-color: azure;
+            height: 85px;
+        }
+        #main{
+            background-color: aquamarine;
+            height: 44px;
+        }
+        #side{
+            background-color: yellow;
+            height: 3220px;
+            width: 30%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <section>
+            <nav>
+                <div>
+                    <ul>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                    </ul>
+                    <ul>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                    </ul>
+                </div>
+            </nav>
+        </section>
+    </header>
+    <div id="container">
+        <div id="logo" class="constrain clearfix">
+            <h2></h2>
+        </div>
+        <nav id="main" class="constrain clearfix">
+            <div>
+                <ul>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </div>
+            <form action=""></form>
+        </nav>
+        <div class="clearfix">
+            <div>
+                <div id="content">
+                    <article>
+                        <header>
+                            <h1></h1>
+                            <hr>
+                            <div></div>
+                        </header>
+                        <div></div>
+                    </article>
+                </div>
+                <div id="side">
+                    <aside>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                        <ul></ul>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div>
+            <div>
+                <div>
+                    <h3></h3>
+                    <ul>
+                        <li></li>
+                        <li></li>
+                        <li></li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <ul>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <p></p>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

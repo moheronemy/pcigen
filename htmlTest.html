@@ -1,0 +1,283 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>Html test</title>
+	<meta charset="UTF-8">
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript" src="myapp.js"></script>
+	<link rel="stylesheet" href="styletest.css">
+</head>
+<body>
+	<div id="pagebody">
+		<div id="header">
+			<h1>旧裏カードジェネレーター</h1>
+		</div>
+		<div id="tab">
+			<ul>
+				<li id="tab1" class="selected">
+					<a>基本設定</a>
+				</li>
+				<li id="tab2">
+					<a>詳細設定</a>
+				</li>
+				<li id="tab3">
+					<a>画像設定</a>
+				</li>
+			</ul>
+		</div>
+		<div id="main">
+			<div id="cardarea">
+				<canvas id = "sample" width="400" height="560" style="display:none;"></canvas>
+				<a href=""><img id="cardback" width="300" height="420" src="images/pcardback.jpg" alt=""></a>
+				<a id="anc" href=""><img id="cardimg" src="cardsamp.jpg" width="300" height="420"></a>
+				<button type="button" id="make">作成</button>
+			</div>
+			<div id="textarea">
+				<dl id="basic">
+					<dt>
+						<label for="siries">シリーズ</label>
+					</dt>
+					<dd>
+						<select id="siries">
+							<option value="0">ポケットモンスターカードゲーム</option>
+							<option value="1">ポケモンカード★neo</option>
+							<option value="2">ポケモンカードe</option>
+						</select>
+					</dd>
+					<dt>
+						<label for="cclass">カードの種類</label>					
+					</dt>
+					<dd>
+						<select id="cardClass">
+								<option value="0">たねポケモン</option>
+								<option value="1">1進化ポケモン</option>
+								<option value="2">2進化ポケモン</option>
+								<option value="3">トレーナー</option>
+						</select>
+					</dd>
+					<dt>
+						<label for="cardName">カード名</label>
+					</dt>
+					<dd>
+						<input type="text" id="cardName" class="string" placeholder="わるいゴースト">
+					</dd>
+					<dt>
+						<span>HP</span>
+						<span>タイプ</span>
+					</dt>
+					<dd>
+						<input type="text" size="1" placeholder="50" id="hp" class="number">
+						<select id="cardType" class="hidden" tabindex="-1">
+							<option value="1" class="colorless">無</option>
+							<option value="2" class="grass">草</option>
+							<option value="3" class="fire">炎</option>
+							<option value="4" class="water">水</option>
+							<option value="5" class="lightning">電</option>
+							<option value="6" class="psychic">超</option>
+							<option value="7" class="fighting">闘</option>
+							<option value="8" class="darkness">悪</option>
+							<option value="9" class="metal">鋼</option>
+						</select>
+						<div class="typeSelector" tabindex="0">
+							<span class="value colorless"></span>
+							<ul class="optList hidden">
+								<li class="option colorless"></li>
+								<li class="option grass"></li>
+								<li class="option fire"></li>
+								<li class="option water"></li>
+								<li class="option lightning"></li>
+								<li class="option phychic"></li>
+								<li class="option fighting"></li>
+								<li class="option darkness"></li>
+								<li class="option metal"></li>
+							</ul>
+						</div>
+					</dd>
+					<dt class="move1">
+						<span>わざ１</span>
+						<button type="button">わざ追加</button>
+					</dt>
+					<dd>
+						<label>
+							<input type="text" id="move1_name" placeholder="たいあたり" class="string">
+							<input type="text" size="1" placeholder="10" id="move1_power" class="number"><br>
+							<textarea id="move1_text"></textarea>
+						</label>
+						<label><button type="button" id="move1_energy" class="choiceType">タイプ選択</button></label>
+					</dd>
+					<dt class="move2" style="display: none;">
+						<span>わざ2</span>
+					</dt>
+					<dd class="move2"style="display: none;">
+						<label >
+							<input type="text" id="move2_name" class="string">
+							<input type="text" size="1" id="move2_power" class="number"><br>
+							<textarea id="move2_text"></textarea>
+						</label>
+						<label><button type="button" id="move2_energy" class="choiceType">タイプ選択</button></label>
+					</dd>
+					<dt>
+						<label for="rereat">にげる</label>
+						<label for="weakness">弱点</label>
+						<label for="resistance">抵抗力</label>
+					</dt>
+					<dd>
+						<select id="rereat">
+							<option value="0">なし</option>
+							<option value="1">1個</option>
+							<option value="2">2個</option>
+							<option value="3">3個</option>
+							<option value="4">4個</option>
+						</select>
+						<select id="weakness" class="hidden">
+							<option value="0">なし</option>
+							<option value="1" class="colorless">無</option>
+							<option value="2" class="grass">草</option>
+							<option value="3" class="fire">炎</option>
+							<option value="4" class="water">水</option>
+							<option value="5" class="lightning">電</option>
+							<option value="6" class="psychic">超</option>
+							<option value="7" class="fighting">闘</option>
+							<option value="8" class="darkness">悪</option>
+							<option value="9" class="metal">鋼</option>
+						</select>
+						<div class="typeSelector" tabindex="0">
+							<span class="value none"></span>
+							<ul class="optList hidden">
+								<li class="option none"></li>
+								<li class="option colorless"></li>
+								<li class="option grass"></li>
+								<li class="option fire"></li>
+								<li class="option water"></li>
+								<li class="option lightning"></li>
+								<li class="option phychic"></li>
+								<li class="option fighting"></li>
+								<li class="option darkness"></li>
+								<li class="option metal"></li>
+							</ul>
+						</div>
+						<select id="resistance" class="hidden" >
+							<option value="0"></option>
+							<option value="1" class="colorless">無</option>
+							<option value="2" class="grass">草</option>
+							<option value="3" class="fire">炎</option>
+							<option value="4" class="water">水</option>
+							<option value="5" class="lightning">電</option>
+							<option value="6" class="psychic">超</option>
+							<option value="7" class="fighting">闘</option>
+							<option value="8" class="darkness">悪</option>
+							<option value="9" class="metal">鋼</option>
+						</select>
+						<div class="typeSelector" tabindex="0">
+							<span class="value none"></span>
+							<ul class="optList hidden">
+								<li class="option none"></li>
+								<li class="option colorless"></li>
+								<li class="option grass"></li>
+								<li class="option fire"></li>
+								<li class="option water"></li>
+								<li class="option lightning"></li>
+								<li class="option phychic"></li>
+								<li class="option fighting"></li>
+								<li class="option darkness"></li>
+								<li class="option metal"></li>
+							</ul>
+						</div>
+					</dd>
+					<dt>
+					<label for="pokedex">ずかん</label>
+					</dt>
+					<dd>
+					<textarea id="pokedex"></textarea>
+					</dd>
+				</dl>
+				<dl id="detail">
+					<dt>
+						<label for="evoFrom">～から進化</label>
+					</dt>
+					<dd>
+						<input id="evoFrom" type="text">
+					</dd>
+					<dt>
+						<label for="level">レベル</label>
+					</dt>
+					<dd>
+						<input id="level" size="1">
+					</dd>
+					<dt>
+						<label for="info">種類・たかさ・おもさ</label>
+					</dt>
+					<dd>
+						<input id="info" type="text">
+					</dd>
+					<dt>
+						<label for="illus">イラストレーター</label>
+					</dt>
+					<dd>
+						<input id="illus" type="text">
+					</dd>
+					<dt>
+						<label for="copyright">著作権表示</label>
+					</dt>
+					<dd>
+						<input id="copyright" type="text">
+					</dd>
+					<dt>
+						<label for="number">ナンバリング</label>
+					</dt>
+					<dd>
+						<input id="number" type="text">
+					</dd>
+					<dt>
+						<label for="rarity">レアリティ</label>
+					</dt>
+					<dd>
+						<select id="rarity">
+							<option value="0">●</option>
+							<option value="1">◆</option>
+							<option value="2">★</option>
+							<option value="3">★★★</option>
+						</select>
+					</dd>
+				</dl>
+				<dl id="images">
+					<dt>
+						<p>画像</p>
+					</dt>
+					<dd>
+						<input id="mainimg" type="file" name="mainimg">
+					</dd>
+					<dt>
+						<p>進化前画像</p>
+					</dt>
+					<dd>
+						<input id="unevoimg" type="file" name="unevoimg">
+					</dd>
+				</dl>	
+			</div>
+		</div>
+		<div id="typePicker" style="display: none;" tabindex="0">
+			<div class="value">
+			</div>
+			<table class="typeTable">
+					<tr>
+						<td class="button colorless"></td>
+						<td class="button grass"></td>
+						<td class="button fire"></td>
+						<td class="button cancel"></td>
+					</tr>
+					<tr>
+						<td class="button water"></td>
+						<td class="button lightning"></td>
+						<td class="button phychic"></td>
+					</tr>
+					<tr>
+						<td class="button fighting"></td>
+						<td class="button darkness"></td>
+						<td class="button metal"></td>
+					</tr>
+			</table>
+		</div>
+	</div>
+</body>
+</html>
