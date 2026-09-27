@@ -12,6 +12,7 @@
 - イラストレーター・著作権表示・ナンバリング・レアリティ
 - イラストと進化前ポケモンの画像（プレビュー上でドラッグして移動、ホイールで拡大縮小）
 - PNG で保存（400×560 / 800×1120）
+- プレビューをダブルクリック（または「うらを見る」ボタン）でカードを裏返す
 - 入力内容の自動保存（ブラウザの localStorage）と、JSON の書き出し・読み込み
 - ポケモン名の入力補完（第1〜第2世代）
 
@@ -71,6 +72,7 @@ e2e/                   Playwright のテスト
 | `pcardtrainer.png` / `pcardtrainere.png`           | トレーナーの枠（初代・neo 共通 / e）     |
 | `stage1/2.png`, `stageneo1/2.png`, `stagee1/2.png` | 進化マーク                               |
 | `resistance.png`                                   | 初代の「抵抗力 ダメージ」の文字          |
+| `pcardback.jpg`                                    | カードの裏面（プレビューの裏返し用）     |
 | `sprite.png`                                       | エネルギーアイコン（28px、タイプ順に縦） |
 | `type_sprite.png` / `button_sprite.png`            | 入力画面のタイプアイコン・ボタン         |
 

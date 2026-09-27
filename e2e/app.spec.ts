@@ -63,3 +63,21 @@ test('入力内容は再読み込みしても残る', async ({ page }) => {
   await page.reload();
   await expect(page.getByLabel('カード名')).toHaveValue('ゴースト');
 });
+
+test('ダブルクリックでカードを裏返せる', async ({ page }) => {
+  const flip = page.getByTestId('card-flip');
+  const button = page.getByRole('button', { name: 'うらを見る' });
+  await expect(page.getByAltText('カードの裏面')).toBeAttached();
+
+  await page.getByTestId('card-canvas').dblclick();
+  await expect(flip).toHaveClass(/flipped/);
+  await expect(page.getByRole('button', { name: 'おもてを見る' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  // 裏面をダブルクリックすると、おもてに戻る
+  await page.getByAltText('カードの裏面').dblclick();
+  await expect(flip).not.toHaveClass(/flipped/);
+  await expect(button).toHaveAttribute('aria-pressed', 'false');
+});

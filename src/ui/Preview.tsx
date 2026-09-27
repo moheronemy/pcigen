@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type Dispatch } from 'react';
+import cardBackUrl from '../assets/card/pcardback.jpg';
 import { getLayout } from '../layout/layout';
 import type { CardData } from '../model/card';
 import { drawCard, prepareCard } from '../render/draw';
@@ -13,6 +14,7 @@ interface Props {
 export const Preview = ({ card, dispatch }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [flipped, setFlipped] = useState(false);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   // 最新の card をイベントハンドラから参照する
   const cardRef = useRef(card);
@@ -69,34 +71,57 @@ export const Preview = ({ card, dispatch }: Props) => {
 
   return (
     <div className="preview">
-      <canvas
-        ref={canvasRef}
-        width={CARD_WIDTH}
-        height={CARD_HEIGHT}
-        className={card.art.src ? 'draggable' : undefined}
-        role="img"
-        aria-label={`カードのプレビュー${card.name ? `：${card.name}` : ''}`}
-        data-testid="card-canvas"
-        onPointerDown={(e) => {
-          if (!inArtWindow(e.clientX, e.clientY)) return;
-          e.currentTarget.setPointerCapture(e.pointerId);
-          drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
-        }}
-        onPointerMove={(e) => {
-          const d = drag.current;
-          if (!d || d.id !== e.pointerId) return;
-          const { k } = toCard(e.clientX, e.clientY);
-          dispatch({
-            type: 'moveArt',
-            key: 'art',
-            dx: (e.clientX - d.x) * k,
-            dy: (e.clientY - d.y) * k,
-          });
-          drag.current = { ...d, x: e.clientX, y: e.clientY };
-        }}
-        onPointerUp={() => (drag.current = null)}
-        onPointerCancel={() => (drag.current = null)}
-      />
+      <div
+        className={`card-flip${flipped ? ' flipped' : ''}`}
+        data-testid="card-flip"
+        onDoubleClick={() => setFlipped((f) => !f)}
+      >
+        <canvas
+          ref={canvasRef}
+          width={CARD_WIDTH}
+          height={CARD_HEIGHT}
+          className={card.art.src ? 'draggable' : undefined}
+          role="img"
+          aria-label={`カードのプレビュー${card.name ? `：${card.name}` : ''}`}
+          data-testid="card-canvas"
+          onPointerDown={(e) => {
+            if (!inArtWindow(e.clientX, e.clientY)) return;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+          }}
+          onPointerMove={(e) => {
+            const d = drag.current;
+            if (!d || d.id !== e.pointerId) return;
+            const { k } = toCard(e.clientX, e.clientY);
+            dispatch({
+              type: 'moveArt',
+              key: 'art',
+              dx: (e.clientX - d.x) * k,
+              dy: (e.clientY - d.y) * k,
+            });
+            drag.current = { ...d, x: e.clientX, y: e.clientY };
+          }}
+          onPointerUp={() => (drag.current = null)}
+          onPointerCancel={() => (drag.current = null)}
+        />
+        <img
+          className="card-back"
+          src={cardBackUrl}
+          alt="カードの裏面"
+          width={CARD_WIDTH}
+          height={CARD_HEIGHT}
+          draggable={false}
+          aria-hidden={!flipped}
+        />
+      </div>
+      <button
+        type="button"
+        className="small flip-button"
+        aria-pressed={flipped}
+        onClick={() => setFlipped((f) => !f)}
+      >
+        {flipped ? 'おもてを見る' : 'うらを見る'}
+      </button>
       {error && <p className="error">{error}</p>}
     </div>
   );
