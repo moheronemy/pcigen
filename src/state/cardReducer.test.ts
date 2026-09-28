@@ -42,3 +42,11 @@ describe('cardReducer のキラ加工', () => {
     expect(card.holo).toMatchObject({ style: 'swirl', area: 'art' });
   });
 });
+
+describe('cardReducer のポケパワー・ポケボディー', () => {
+  it('部分的に変えられる', () => {
+    let card = cardReducer(createCard(), { type: 'setAbility', patch: { kind: 'pokebody' } });
+    card = cardReducer(card, { type: 'setAbility', patch: { name: 'あついからだ' } });
+    expect(card.ability).toEqual({ kind: 'pokebody', name: 'あついからだ', text: '' });
+  });
+});

@@ -96,3 +96,25 @@ test('キラ加工をかけられる', async ({ page }) => {
   await page.getByLabel('模様').selectOption({ label: 'なし' });
   await expect(page.getByTestId('holo-shine')).toHaveCount(0);
 });
+
+test('e シリーズだけポケパワー・ポケボディーを設定できる', async ({ page }) => {
+  const ability = page.getByRole('group', { name: 'ポケパワー・ポケボディー' });
+  await page.getByRole('tab', { name: 'わざ・効果' }).click();
+  await expect(ability).toHaveCount(0);
+
+  await page.getByRole('tab', { name: '基本' }).click();
+  await page.getByLabel('シリーズ').selectOption({ label: 'ポケモンカードe' });
+  await page.getByRole('tab', { name: 'わざ・効果' }).click();
+  await expect(ability).toBeVisible();
+  await page.waitForTimeout(500);
+  const before = await canvasData(page);
+
+  await ability.getByLabel('種類').selectOption({ label: 'ポケパワー' });
+  await ability.getByLabel('名前').fill('エナジートランス');
+  await expect.poll(() => canvasData(page)).not.toBe(before);
+
+  await page.getByRole('tab', { name: '基本' }).click();
+  await page.getByLabel('カードの種類').selectOption({ label: 'トレーナー' });
+  await page.getByRole('tab', { name: 'わざ・効果' }).click();
+  await expect(ability).toHaveCount(0);
+});

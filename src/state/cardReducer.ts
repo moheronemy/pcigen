@@ -5,6 +5,7 @@ import {
   MAX_COST,
   MAX_MOVES,
   normalizeCard,
+  type Ability,
   type Artwork,
   type Holo,
   type CardData,
@@ -21,6 +22,7 @@ const clampScale = (s: number) => Math.min(MAX_ART_SCALE, Math.max(MIN_ART_SCALE
 
 export type CardAction =
   | { type: 'set'; patch: Partial<CardData> }
+  | { type: 'setAbility'; patch: Partial<Ability> }
   | { type: 'setMove'; index: number; patch: Partial<Move> }
   | { type: 'addMove' }
   | { type: 'removeMove'; index: number }
@@ -43,6 +45,8 @@ export const cardReducer = (card: CardData, action: CardAction): CardData => {
   switch (action.type) {
     case 'set':
       return normalizeCard({ ...card, ...action.patch });
+    case 'setAbility':
+      return { ...card, ability: { ...card.ability, ...action.patch } };
     case 'setMove':
       return updateMove(card, action.index, (m) => ({ ...m, ...action.patch }));
     case 'addMove':
