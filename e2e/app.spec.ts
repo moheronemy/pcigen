@@ -118,3 +118,27 @@ test('e シリーズだけポケパワー・ポケボディーを設定できる
   await page.getByRole('tab', { name: 'わざ・効果' }).click();
   await expect(ability).toHaveCount(0);
 });
+
+test('レイアウト確認モードで枠と座標を表示できる', async ({ page }) => {
+  const guides = page.getByTestId('layout-guides');
+  await expect(guides).toHaveCount(0);
+  await page.waitForTimeout(500);
+  const before = await canvasData(page);
+
+  await page.getByLabel('レイアウト確認').check();
+  await expect(guides).toBeVisible();
+  await expect(guides.getByText('わざ欄')).toBeAttached();
+  // 枠は重ねて表示するだけで、カードの画像（PNG）には入らない
+  expect(await canvasData(page)).toBe(before);
+
+  const box = await page.getByTestId('card-canvas').boundingBox();
+  if (!box) throw new Error('canvas が見つかりません');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(page.getByText(/カード座標 x: (199|200|201) \/ y: (279|280|281)/)).toBeVisible();
+
+  // 次に開いたときも確認モードのまま
+  await page.reload();
+  await expect(guides).toBeVisible();
+  await page.getByLabel('レイアウト確認').uncheck();
+  await expect(guides).toHaveCount(0);
+});

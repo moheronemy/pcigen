@@ -46,6 +46,7 @@ npm run test:e2e      # E2E テスト（Playwright。ビルドしてから実行
 src/
   model/card.ts        カードのデータ型、初期値、保存データの読み込み（parseCard）
   layout/layout.ts     シリーズ・種類ごとの配置（座標）と使う素材画像
+  layout/guides.ts     レイアウト確認モードで重ねる枠と線
   render/
     renderCard.ts      Canvas への描画（DOM に依存しない関数）
     holo.ts            キラ加工の模様と重ね方
@@ -64,6 +65,8 @@ e2e/                   Playwright のテスト
 
 文字やアイコンの位置は `src/layout/layout.ts` の数値（400×560px のカード座標）で決まっています。
 素材画像から測った値なので、見た目を直したいときはここを変更してください。
+
+プレビューの下の「レイアウト確認」をオンにすると、`layout.ts` の枠（画像・文字・アイコン・範囲）がカードに重なって表示され、マウスの位置のカード座標も出ます。PNG には入りません。
 
 ### 素材画像
 
