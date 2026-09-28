@@ -35,3 +35,22 @@ describe('getLayout', () => {
     expect(getLayout(createCard()).overlays).not.toContain('resistance');
   });
 });
+
+describe('ポケパワー・ポケボディーの見出し画像', () => {
+  const withAbility = (series: 'base' | 'neo' | 'e', kind: 'pokepower' | 'pokebody') => ({
+    ...createCard(),
+    series,
+    ability: { kind, name: '', text: '' },
+  });
+
+  it.each(['pokepower', 'pokebody'] as const)('e シリーズでは %s の画像を使う', (kind) => {
+    const keys = requiredAssets(getLayout(withAbility('e', kind)));
+    expect(keys).toContain(kind);
+    for (const key of keys) expect(assetExists(key), key).toBe(true);
+  });
+
+  it('e シリーズ以外では使わない', () => {
+    expect(requiredAssets(getLayout(withAbility('base', 'pokepower')))).not.toContain('pokepower');
+    expect(requiredAssets(getLayout(withAbility('neo', 'pokebody')))).not.toContain('pokebody');
+  });
+});

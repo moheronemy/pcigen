@@ -97,53 +97,97 @@ const drawHp = (ctx: CanvasRenderingContext2D, card: CardData, layout: Layout) =
   ctx.fillText('HP', right - w - 2, y);
 };
 
+/** 「ポケパワー」「ポケボディー」見出し画像の縦横比（700×177） */
+const BADGE_ASPECT = 700 / 177;
+
+interface MoveBlock {
+  height: number;
+  draw: (top: number) => void;
+}
+
 const drawMoves = (
   ctx: CanvasRenderingContext2D,
   card: CardData,
   layout: Layout,
-  sprite: HTMLImageElement | undefined,
+  images: RenderImages,
 ) => {
   const m = layout.moves;
-  if (!m || card.moves.length === 0) return;
-  const slotH = (m.bottom - m.top) / card.moves.length;
+  if (!m) return;
+  const sprite = images.assets.sprite;
   const textLineH = m.textSize + 3;
-
-  card.moves.forEach((move, i) => {
-    const slotTop = m.top + slotH * i;
+  const wrap = (text: string, width: number) => {
     ctx.font = font(m.textSize, 500);
-    const lines = move.text
-      ? wrapText(move.text, m.textWidth, (t) => ctx.measureText(t).width)
-      : [];
-    const blockH = m.nameSize + (lines.length ? 4 + lines.length * textLineH : 0);
-    const nameBaseline = slotTop + (slotH - blockH) / 2 + m.nameSize * 0.9;
-
-    // エネルギー：2個ずつ並べ、名前の行の高さを中心にそろえる
-    const rows = Math.ceil(move.cost.length / 2);
-    const gap = 2;
-    const gridH = rows * m.iconSize + (rows - 1) * gap;
-    const gridTop = nameBaseline - m.nameSize * 0.35 - gridH / 2;
-    move.cost.forEach((type, j) => {
-      const x = m.iconX + (j % 2) * (m.iconSize + gap);
-      const y = gridTop + Math.floor(j / 2) * (m.iconSize + gap);
-      drawEnergy(ctx, sprite, type, x, y, m.iconSize);
-    });
-
-    ctx.textAlign = 'left';
-    ctx.font = font(m.nameSize);
-    ctx.fillText(move.name, m.nameX, nameBaseline, m.damageRight - m.nameX - 44);
-    if (move.damage) {
-      ctx.textAlign = 'right';
-      ctx.fillText(move.damage, m.damageRight, nameBaseline, 60);
-    }
-
+    return text ? wrapText(text, width, (t) => ctx.measureText(t).width) : [];
+  };
+  const drawLines = (lines: string[], x: number, nameBaseline: number) => {
     ctx.textAlign = 'left';
     ctx.font = font(m.textSize, 500);
     lines.forEach((line, k) =>
-      ctx.fillText(line, m.textX, nameBaseline + 4 + m.textSize + k * textLineH),
+      ctx.fillText(line, x, nameBaseline + 4 + m.textSize + k * textLineH),
     );
+  };
+  const textHeight = (lines: string[]) => (lines.length ? 4 + lines.length * textLineH : 0);
 
+  const blocks: MoveBlock[] = [];
+
+  // ポケパワー・ポケボディー：見出し画像の右に名前、その下に説明
+  const badge = m.ability ? images.assets[m.ability.badge] : undefined;
+  if (m.ability && badge) {
+    const bh = m.ability.badgeHeight;
+    const bw = bh * BADGE_ASPECT;
+    const lines = wrap(card.ability.text, m.damageRight - m.iconX);
+    const lineH = Math.max(bh, m.nameSize);
+    blocks.push({
+      height: lineH + textHeight(lines),
+      draw: (top) => {
+        const nameBaseline = top + (lineH + m.nameSize * 0.8) / 2;
+        ctx.drawImage(badge, m.iconX, top + (lineH - bh) / 2, bw, bh);
+        const nameX = m.iconX + bw + 8;
+        ctx.textAlign = 'left';
+        ctx.font = font(m.nameSize);
+        ctx.fillText(card.ability.name, nameX, nameBaseline, m.damageRight - nameX);
+        drawLines(lines, m.iconX, top + lineH);
+      },
+    });
+  }
+
+  for (const move of card.moves) {
+    const lines = wrap(move.text, m.textWidth);
+    blocks.push({
+      height: m.nameSize + textHeight(lines),
+      draw: (top) => {
+        const nameBaseline = top + m.nameSize * 0.9;
+        // エネルギー：2個ずつ並べ、名前の行の高さを中心にそろえる
+        const rows = Math.ceil(move.cost.length / 2);
+        const gap = 2;
+        const gridH = rows * m.iconSize + (rows - 1) * gap;
+        const gridTop = nameBaseline - m.nameSize * 0.35 - gridH / 2;
+        move.cost.forEach((type, j) => {
+          const x = m.iconX + (j % 2) * (m.iconSize + gap);
+          const y = gridTop + Math.floor(j / 2) * (m.iconSize + gap);
+          drawEnergy(ctx, sprite, type, x, y, m.iconSize);
+        });
+
+        ctx.textAlign = 'left';
+        ctx.font = font(m.nameSize);
+        ctx.fillText(move.name, m.nameX, nameBaseline, m.damageRight - m.nameX - 44);
+        if (move.damage) {
+          ctx.textAlign = 'right';
+          ctx.fillText(move.damage, m.damageRight, nameBaseline, 60);
+        }
+        drawLines(lines, m.textX, nameBaseline);
+      },
+    });
+  }
+  if (blocks.length === 0) return;
+
+  // 各ブロックの間と上下を同じ間隔にして並べる（収まらないときは詰めて並べる）
+  const contentH = blocks.reduce((sum, b) => sum + b.height, 0);
+  const gap = Math.max(4, (m.bottom - m.top - contentH) / (blocks.length + 1));
+  let top = m.top + gap;
+  blocks.forEach((block, i) => {
     if (m.divider && i > 0) {
-      const y = Math.round(slotTop) + 0.5;
+      const y = Math.round(top - gap / 2) + 0.5;
       ctx.save();
       ctx.strokeStyle = ctx.fillStyle;
       ctx.lineWidth = 1;
@@ -153,6 +197,8 @@ const drawMoves = (
       ctx.stroke();
       ctx.restore();
     }
+    block.draw(top);
+    top += block.height + gap;
   });
 };
 
@@ -259,7 +305,7 @@ export const renderCard = (
     ctx.textAlign = 'center';
     ctx.fillText(card.info, i.x, i.y, i.maxWidth);
   }
-  drawMoves(ctx, card, layout, sprite);
+  drawMoves(ctx, card, layout, images);
   drawStats(ctx, card, layout, sprite);
   if (layout.pokedex) drawParagraph(ctx, card.pokedex, layout.pokedex);
   if (layout.trainerText) drawParagraph(ctx, card.trainerText, layout.trainerText);
@@ -281,6 +327,8 @@ export const cardText = (card: CardData): string =>
     card.number,
     card.rarity,
     card.resistanceValue,
+    card.ability.name,
+    card.ability.text,
     ...card.moves.flatMap((m) => [m.name, m.damage, m.text]),
     'HPLV.Illus.から進化弱点抵抗力にげる0123456789',
   ].join('');

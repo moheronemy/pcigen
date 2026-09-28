@@ -74,6 +74,26 @@ export interface Holo {
   intensity: number;
 }
 
+/** ポケパワー・ポケボディー（e シリーズのみ） */
+export const ABILITY_KINDS = ['none', 'pokepower', 'pokebody'] as const;
+export type AbilityKind = (typeof ABILITY_KINDS)[number];
+
+export const ABILITY_LABELS: Record<AbilityKind, string> = {
+  none: 'なし',
+  pokepower: 'ポケパワー',
+  pokebody: 'ポケボディー',
+};
+
+export interface Ability {
+  kind: AbilityKind;
+  name: string;
+  text: string;
+}
+
+/** ポケパワー・ポケボディーを持てるのは e シリーズのポケモンだけ */
+export const supportsAbility = (card: Pick<CardData, 'series' | 'stage'>) =>
+  card.series === 'e' && card.stage !== 'trainer';
+
 export const MAX_MOVES = 2;
 export const MAX_RETREAT = 4;
 export const MAX_COST = 4;
@@ -101,6 +121,7 @@ export interface CardData {
   hp: string;
   level: string;
   evolvesFrom: string;
+  ability: Ability;
   moves: Move[];
   weakness: EnergyType | null;
   resistance: EnergyType | null;
@@ -118,6 +139,8 @@ export interface CardData {
   holo: Holo;
 }
 
+export const emptyAbility = (): Ability => ({ kind: 'none', name: '', text: '' });
+
 export const emptyMove = (): Move => ({ name: '', damage: '', text: '', cost: [] });
 
 export const emptyArtwork = (): Artwork => ({ src: null, x: 0, y: 0, scale: 1 });
@@ -132,6 +155,7 @@ export const createCard = (): CardData => ({
   hp: '',
   level: '',
   evolvesFrom: '',
+  ability: emptyAbility(),
   moves: [emptyMove()],
   weakness: null,
   resistance: null,
@@ -185,6 +209,11 @@ const parseArtwork = (v: unknown): Artwork => {
   };
 };
 
+const parseAbility = (v: unknown): Ability => {
+  const o = (v ?? {}) as Record<string, unknown>;
+  return { kind: pick(ABILITY_KINDS, o.kind, 'none'), name: str(o.name), text: str(o.text) };
+};
+
 const parseHolo = (v: unknown): Holo => {
   const o = (v ?? {}) as Record<string, unknown>;
   const base = defaultHolo();
@@ -224,6 +253,7 @@ export const parseCard = (input: unknown): CardData => {
     hp: str(o.hp),
     level: str(o.level),
     evolvesFrom: str(o.evolvesFrom),
+    ability: parseAbility(o.ability),
     moves: moves.length > 0 ? moves : base.moves,
     weakness: isEnergyType(o.weakness) ? o.weakness : null,
     resistance: isEnergyType(o.resistance) ? o.resistance : null,

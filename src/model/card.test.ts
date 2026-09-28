@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableTypes, createCard, normalizeCard, parseCard } from './card';
+import { availableTypes, createCard, normalizeCard, parseCard, supportsAbility } from './card';
 
 describe('availableTypes', () => {
   it('初代には悪・鋼がない', () => {
@@ -64,6 +64,23 @@ describe('parseCard のキラ加工', () => {
       style: 'cosmos',
       area: 'art',
       intensity: 1,
+    });
+  });
+});
+
+describe('ポケパワー・ポケボディー', () => {
+  it('e シリーズのポケモンだけが持てる', () => {
+    expect(supportsAbility({ series: 'e', stage: 'basic' })).toBe(true);
+    expect(supportsAbility({ series: 'e', stage: 'trainer' })).toBe(false);
+    expect(supportsAbility({ series: 'neo', stage: 'stage1' })).toBe(false);
+  });
+
+  it('古い保存データや不正な値は「なし」になる', () => {
+    expect(parseCard({}).ability).toEqual({ kind: 'none', name: '', text: '' });
+    expect(parseCard({ ability: { kind: 'x', name: 'A' } }).ability).toEqual({
+      kind: 'none',
+      name: 'A',
+      text: '',
     });
   });
 });

@@ -1,6 +1,8 @@
 import { useState, type Dispatch } from 'react';
 import { POKEMON_NAMES } from '../data/pokemonNames';
 import {
+  ABILITY_KINDS,
+  ABILITY_LABELS,
   availableTypes,
   HOLO_AREA_LABELS,
   HOLO_AREAS,
@@ -13,6 +15,7 @@ import {
   SERIES_LABELS,
   STAGE_LABELS,
   STAGES,
+  supportsAbility,
   type CardData,
 } from '../model/card';
 import type { CardAction } from '../state/cardReducer';
@@ -147,6 +150,34 @@ export const Editor = ({ card, dispatch }: Props) => {
 
         {tab === 'moves' && !isTrainer && (
           <>
+            {supportsAbility(card) && (
+              <fieldset className="ability">
+                <legend>ポケパワー・ポケボディー</legend>
+                <Select
+                  label="種類"
+                  value={card.ability.kind}
+                  options={ABILITY_KINDS.map((k) => ({ value: k, label: ABILITY_LABELS[k] }))}
+                  onChange={(kind) => dispatch({ type: 'setAbility', patch: { kind } })}
+                />
+                {card.ability.kind !== 'none' && (
+                  <>
+                    <TextField
+                      label="名前"
+                      value={card.ability.name}
+                      onChange={(name) => dispatch({ type: 'setAbility', patch: { name } })}
+                      placeholder={
+                        card.ability.kind === 'pokepower' ? 'エナジートランス' : 'あついからだ'
+                      }
+                    />
+                    <TextArea
+                      label="説明"
+                      value={card.ability.text}
+                      onChange={(text) => dispatch({ type: 'setAbility', patch: { text } })}
+                    />
+                  </>
+                )}
+              </fieldset>
+            )}
             {card.moves.map((move, i) => (
               <fieldset key={i} className="move">
                 <legend>わざ{i + 1}</legend>

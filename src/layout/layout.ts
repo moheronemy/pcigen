@@ -1,4 +1,4 @@
-import { ENERGY_TYPES, type CardData } from '../model/card';
+import { ENERGY_TYPES, supportsAbility, type CardData } from '../model/card';
 
 /**
  * カード上の配置（400×560px のカード座標）。
@@ -38,6 +38,12 @@ export interface MovesLayout {
   textSize: number;
   /** 2つのわざの間に引く区切り線（x の範囲） */
   divider?: [number, number];
+  /** ポケパワー・ポケボディー（わざの上に置く） */
+  ability?: {
+    /** 「ポケパワー」「ポケボディー」の見出し画像 */
+    badge: string;
+    badgeHeight: number;
+  };
 }
 
 export interface StatsLayout {
@@ -197,6 +203,10 @@ const ePokemon = (card: CardData): Layout => {
       textX: 116,
       textWidth: 254,
       textSize: 9,
+      ability:
+        supportsAbility(card) && card.ability.kind !== 'none'
+          ? { badge: card.ability.kind, badgeHeight: 19 }
+          : undefined,
     },
     stats: {
       labels: [
@@ -232,4 +242,5 @@ export const requiredAssets = (layout: Layout): string[] => [
   layout.frame,
   ...layout.overlays,
   ...(layout.moves || layout.stats ? ['sprite'] : []),
+  ...(layout.moves?.ability ? [layout.moves.ability.badge] : []),
 ];
