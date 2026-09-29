@@ -7,12 +7,24 @@ import {
   type PointerEvent,
 } from 'react';
 import cardBackUrl from '../assets/card/pcardback.jpg';
+import { layoutGuides } from '../layout/guides';
 import { getLayout } from '../layout/layout';
 import type { CardData } from '../model/card';
 import { drawCard, prepareCard } from '../render/draw';
 import { holoPath } from '../render/holo';
 import { CARD_HEIGHT, CARD_WIDTH } from '../render/renderCard';
 import type { CardAction } from '../state/cardReducer';
+import { GuideOverlay } from './GuideOverlay';
+
+const GUIDES_KEY = 'pcigen:guides';
+
+const loadShowGuides = () => {
+  try {
+    return localStorage.getItem(GUIDES_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
 
 interface Props {
   card: CardData;
@@ -23,6 +35,9 @@ export const Preview = ({ card, dispatch }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
+  const [showGuides, setShowGuides] = useState(loadShowGuides);
+  /** 確認モードで表示する、マウスの位置のカード座標 */
+  const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   // 最新の card をイベントハンドラから参照する
   const cardRef = useRef(card);
@@ -83,7 +98,8 @@ export const Preview = ({ card, dispatch }: Props) => {
   /** マウスの位置に合わせて、カードを少し傾けて光の当たり方を動かす */
   const onTilt = (e: PointerEvent<HTMLDivElement>) => {
     const el = tiltRef.current;
-    if (!el || !holoOn || flipped || e.pointerType === 'touch') return;
+    // 確認モードでは座標を読みやすくするため傾けない
+    if (!el || !holoOn || flipped || showGuides || e.pointerType === 'touch') return;
     const rect = el.getBoundingClientRect();
     const px = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
     const py = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
@@ -129,6 +145,10 @@ export const Preview = ({ card, dispatch }: Props) => {
               drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
             }}
             onPointerMove={(e) => {
+              if (showGuides) {
+                const p = toCard(e.clientX, e.clientY);
+                setPointer({ x: Math.round(p.x), y: Math.round(p.y) });
+              }
               const d = drag.current;
               if (!d || d.id !== e.pointerId) return;
               const { k } = toCard(e.clientX, e.clientY);
@@ -142,6 +162,7 @@ export const Preview = ({ card, dispatch }: Props) => {
             }}
             onPointerUp={() => (drag.current = null)}
             onPointerCancel={() => (drag.current = null)}
+            onPointerLeave={() => setPointer(null)}
           />
           {holoOn && (
             <div
@@ -157,6 +178,7 @@ export const Preview = ({ card, dispatch }: Props) => {
               }
             />
           )}
+          {showGuides && <GuideOverlay guides={layoutGuides(getLayout(card))} />}
           <img
             className="card-back"
             src={cardBackUrl}
@@ -168,14 +190,45 @@ export const Preview = ({ card, dispatch }: Props) => {
           />
         </div>
       </div>
-      <button
-        type="button"
-        className="small flip-button"
-        aria-pressed={flipped}
-        onClick={() => setFlipped((f) => !f)}
-      >
-        {flipped ? 'おもてを見る' : 'うらを見る'}
-      </button>
+      <div className="preview-tools">
+        <button
+          type="button"
+          className="small"
+          aria-pressed={flipped}
+          onClick={() => setFlipped((f) => !f)}
+        >
+          {flipped ? 'おもてを見る' : 'うらを見る'}
+        </button>
+        <label className="guide-toggle">
+          <input
+            type="checkbox"
+            checked={showGuides}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setShowGuides(on);
+              setPointer(null);
+              try {
+                localStorage.setItem(GUIDES_KEY, on ? '1' : '0');
+              } catch {
+                // 保存できなくても表示は切り替わる
+              }
+            }}
+          />
+          レイアウト確認
+        </label>
+      </div>
+      {showGuides && (
+        <p className="guide-coords muted" aria-live="polite">
+          {pointer
+            ? `カード座標 x: ${pointer.x} / y: ${pointer.y}`
+            : 'カードの上にマウスを乗せると座標が出ます（400×560）'}
+          <br />
+          <span className="guide-legend">
+            <span className="guide-image">■</span>画像 <span className="guide-text">■</span>文字{' '}
+            <span className="guide-icon">■</span>アイコン <span className="guide-area">■</span>範囲
+          </span>
+        </p>
+      )}
       {error && <p className="error">{error}</p>}
     </div>
   );
