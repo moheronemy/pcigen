@@ -259,3 +259,42 @@ test('PCG の進化ポケモンとトレーナーを切り替えられる', asyn
   await expect(page.getByTestId('layout-guides').getByText('効果', { exact: true })).toBeVisible();
   await expect(page.getByTestId('layout-guides').getByText('わざ欄')).toHaveCount(0);
 });
+
+test('PCG の9タイプで枠が変わり、ex のときだけルール枠を重ねる', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const canvas = page.getByTestId('card-canvas');
+  const pixel = (x: number, y: number) =>
+    canvas.evaluate(
+      (el, { x, y }) => {
+        const c = el as HTMLCanvasElement;
+        return Array.from(c.getContext('2d')!.getImageData(x * 2, y * 2, 1, 1).data);
+      },
+      { x, y },
+    );
+  await expect.poll(() => pixel(100, 24)).not.toEqual([0, 0, 0, 0]);
+  const originalHeader = await pixel(100, 24);
+  await page.getByLabel('シリーズ').selectOption('pcg');
+  await expect.poll(() => pixel(100, 24)).not.toEqual(originalHeader);
+  const headers: string[] = [];
+  for (const type of ['無', '草', '炎', '水', '雷', '超', '闘', '悪', '鋼']) {
+    const previous = headers.at(-1);
+    await page
+      .getByRole('group', { name: 'タイプ', exact: true })
+      .getByTitle(type, { exact: true })
+      .click();
+    if (previous)
+      await expect.poll(async () => JSON.stringify(await pixel(100, 24))).not.toBe(previous);
+    headers.push(JSON.stringify(await pixel(100, 24)));
+    await expect(page.locator('.preview .error')).toHaveCount(0);
+  }
+  expect(new Set(headers).size).toBe(9);
+  const panel = await pixel(290, 288);
+  const outside = await pixel(50, 310);
+  await page.getByLabel('ポケモンex', { exact: true }).check();
+  await expect.poll(() => pixel(290, 288)).not.toEqual(panel);
+  expect(await pixel(50, 310)).toEqual(outside);
+  await page.getByLabel('ポケモンex', { exact: true }).uncheck();
+  await expect.poll(() => pixel(290, 288)).toEqual(panel);
+  expect(errors).toEqual([]);
+});
