@@ -234,14 +234,14 @@ const ePokemon = (card: CardData): Layout => {
   };
 };
 
-/** アップロード画像から再構成した銀色の PCG ex 枠を共通で使う。 */
+/** タイプ別の PCG 枠に、ex のときだけルール枠を重ねる。 */
 const pcgCard = (card: CardData): Layout => {
   const trainer = card.stage === 'trainer';
   const evolved = card.stage === 'stage1' || card.stage === 'stage2';
   const ex = !trainer && card.isEx;
   return {
-    frame: 'pcardpcg',
-    overlays: [],
+    frame: `pcardpcg${trainer ? 1 : typeIndex(card)}`,
+    overlays: ex ? ['pcgexrule'] : [],
     textColor: '#111',
     artWindow: { x: 36, y: 60, w: 328, h: 202 },
     name: { x: 26, y: 42, size: 23, maxWidth: trainer ? 342 : 234, align: 'left' },
@@ -253,7 +253,7 @@ const pcgCard = (card: CardData): Layout => {
     moves: trainer
       ? undefined
       : {
-          top: 304,
+          top: ex ? 304 : 284,
           bottom: ex ? 494 : 466,
           iconX: 29,
           iconSize: 18,
@@ -284,7 +284,7 @@ const pcgCard = (card: CardData): Layout => {
         },
     info: !trainer && !ex ? { x: 218, y: 479, size: 7, maxWidth: 292 } : undefined,
     pokedex: !trainer && !ex ? { x: 70, y: 481, w: 292, h: 19, size: 7, lineHeight: 9 } : undefined,
-    trainerText: trainer ? { x: 70, y: 308, w: 290, h: 180, size: 11, lineHeight: 15 } : undefined,
+    trainerText: trainer ? { x: 70, y: 284, w: 290, h: 210, size: 11, lineHeight: 15 } : undefined,
     footer: {
       y: 544,
       left: 27,
