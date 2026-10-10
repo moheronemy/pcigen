@@ -23,11 +23,12 @@ describe('getLayout', () => {
     expect(getLayout({ ...createCard(), series: 'e', type: 'metal' }).frame).toBe('pcarde9');
   });
 
-  it('トレーナーは e だけ専用の枠', () => {
+  it('トレーナーはシリーズに応じた枠', () => {
     const t = { ...createCard(), stage: 'trainer' as const };
     expect(getLayout({ ...t, series: 'base' }).frame).toBe('pcardtrainer');
     expect(getLayout({ ...t, series: 'neo' }).frame).toBe('pcardtrainer');
     expect(getLayout({ ...t, series: 'e' }).frame).toBe('pcardtrainere');
+    expect(getLayout({ ...t, series: 'pcg' }).frame).toBe('pcardpcg');
   });
 
   it('抵抗力の文字は初代で抵抗力があるときだけ重ねる', () => {
@@ -37,7 +38,7 @@ describe('getLayout', () => {
 });
 
 describe('ポケパワー・ポケボディーの見出し画像', () => {
-  const withAbility = (series: 'base' | 'neo' | 'e', kind: 'pokepower' | 'pokebody') => ({
+  const withAbility = (series: 'base' | 'neo' | 'e' | 'pcg', kind: 'pokepower' | 'pokebody') => ({
     ...createCard(),
     series,
     ability: { kind, name: '', text: '' },
@@ -49,8 +50,31 @@ describe('ポケパワー・ポケボディーの見出し画像', () => {
     for (const key of keys) expect(assetExists(key), key).toBe(true);
   });
 
-  it('e シリーズ以外では使わない', () => {
+  it.each(['pokepower', 'pokebody'] as const)('PCG シリーズでは %s の画像を使う', (kind) => {
+    const keys = requiredAssets(getLayout(withAbility('pcg', kind)));
+    expect(keys).toContain(kind);
+    for (const key of keys) expect(assetExists(key), key).toBe(true);
+  });
+
+  it('初代・neo シリーズでは使わない', () => {
     expect(requiredAssets(getLayout(withAbility('base', 'pokepower')))).not.toContain('pokepower');
     expect(requiredAssets(getLayout(withAbility('neo', 'pokebody')))).not.toContain('pokebody');
+  });
+});
+
+describe('PCG のカード種類', () => {
+  it('ex だけルール欄を使い、通常ポケモンにはずかんを表示する', () => {
+    const card = { ...createCard(), series: 'pcg' as const };
+    expect(getLayout(card).pokedex).toBeDefined();
+    expect(getLayout(card).exRule).toBeUndefined();
+    const ex = getLayout({ ...card, isEx: true });
+    expect(ex.exRule).toBeDefined();
+    expect(ex.pokedex).toBeUndefined();
+    expect(ex.typeIcon).toBeDefined();
+    const trainer = getLayout({ ...card, stage: 'trainer', isEx: true });
+    expect(trainer.exRule).toBeUndefined();
+    expect(trainer.moves).toBeUndefined();
+    expect(trainer.typeIcon).toBeUndefined();
+    expect(trainer.trainerText).toBeDefined();
   });
 });

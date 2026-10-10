@@ -67,7 +67,7 @@ export const App = () => {
   return (
     <div className="page">
       <header className="header">
-        <h1>旧裏カードジェネレーター</h1>
+        <h1>旧裏・PCGカードジェネレーター</h1>
       </header>
 
       <main className="main">

@@ -82,9 +82,15 @@ const drawParagraph = (ctx: CanvasRenderingContext2D, text: string, box: TextBox
 
 const drawName = (ctx: CanvasRenderingContext2D, card: CardData, layout: Layout) => {
   const { name, level } = layout;
+  const cardName =
+    card.series === 'pcg' && card.stage !== 'trainer' && card.isEx && card.name
+      ? /ex$/i.test(card.name)
+        ? card.name
+        : `${card.name}ex`
+      : card.name;
   ctx.font = font(name.size);
   ctx.textAlign = name.align;
-  ctx.fillText(card.name, name.x, name.y, name.maxWidth);
+  ctx.fillText(cardName, name.x, name.y, name.maxWidth);
   if (level && card.level && name.align === 'left') {
     const nameWidth = Math.min(ctx.measureText(card.name).width, name.maxWidth);
     ctx.font = font(level.size);
@@ -272,12 +278,22 @@ const drawFooter = (ctx: CanvasRenderingContext2D, card: CardData, layout: Layou
   const width = f.right - f.left;
   ctx.font = font(f.size);
   if (card.illustrator) {
-    ctx.textAlign = 'left';
-    ctx.fillText(`Illus. ${card.illustrator}`, f.left, f.y, width * 0.33);
+    ctx.textAlign = f.illustrator ? 'right' : 'left';
+    ctx.fillText(
+      `Illus. ${card.illustrator}`,
+      f.illustrator?.x ?? f.left,
+      f.illustrator?.y ?? f.y,
+      f.illustrator?.maxWidth ?? width * 0.33,
+    );
   }
   if (card.copyright) {
     ctx.textAlign = 'center';
-    ctx.fillText(card.copyright, (f.left + f.right) / 2, f.y, width * 0.3);
+    ctx.fillText(
+      card.copyright,
+      f.illustrator ? f.left + width * 0.33 : (f.left + f.right) / 2,
+      f.y,
+      width * (f.illustrator ? 0.64 : 0.3),
+    );
   }
   const right = [card.number, card.rarity].filter(Boolean).join(' ');
   if (right) {
@@ -323,13 +339,32 @@ export const renderCard = (
   const sprite = assets.sprite;
 
   drawName(ctx, card, layout);
+  if (layout.stageLabel) {
+    const s = layout.stageLabel;
+    ctx.font = font(s.size);
+    ctx.textAlign = 'left';
+    ctx.fillText(s.text, s.x, s.y, 64);
+  }
   if (layout.evolvesFrom && card.evolvesFrom) {
     const e = layout.evolvesFrom;
     ctx.font = font(e.size);
     ctx.textAlign = 'left';
-    ctx.fillText(`${card.evolvesFrom}から進化`, e.x, e.y);
+    const text = `${card.evolvesFrom}から進化`;
+    if (card.series === 'pcg') ctx.fillText(text, e.x, e.y, 140);
+    else ctx.fillText(text, e.x, e.y);
   }
   drawHp(ctx, card, layout);
+  if (layout.typeIcon) {
+    const t = layout.typeIcon;
+    drawEnergy(ctx, sprite, card.type, t.x, t.y, t.size);
+  }
+  if (layout.exRule) {
+    drawParagraph(
+      ctx,
+      'ポケモンexがきぜつしたとき、\n相手プレイヤーはサイドを2枚とります。',
+      layout.exRule,
+    );
+  }
   if (layout.info && card.info) {
     const i = layout.info;
     ctx.font = font(i.size);
@@ -361,5 +396,6 @@ export const cardText = (card: CardData): string =>
     card.ability.name,
     card.ability.text,
     ...card.moves.flatMap((m) => [m.name, m.damage, m.text]),
-    'HPLV.Illus.から進化弱点抵抗力にげる0123456789',
+    'HPLV.Illus.exたねポケモン1進化2進化トレーナーから進化弱点抵抗力にげる0123456789',
+    'ポケモンexがきぜつしたとき、相手プレイヤーはサイドを2枚とります。',
   ].join('');
