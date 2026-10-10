@@ -77,6 +77,18 @@ export const layoutGuides = (layout: Layout): Guide[] => {
     g.push(textRect('進化元', e.x, e.y, e.size, 120, 'left'));
   }
   if (layout.hp) g.push(textRect('HP', layout.hp.right, layout.hp.y, 22, 70, 'right'));
+  if (layout.typeIcon) {
+    const t = layout.typeIcon;
+    g.push(rect('タイプ', 'icon', t.x, t.y, t.size, t.size));
+  }
+  if (layout.stageLabel) {
+    const s = layout.stageLabel;
+    g.push(textRect('進化段階', s.x, s.y, s.size, 64, 'left'));
+  }
+  if (layout.exRule) {
+    const r = layout.exRule;
+    g.push(rect('ポケモンexのルール', 'text', r.x, r.y, r.w, r.h));
+  }
   if (layout.info) {
     const i = layout.info;
     g.push(textRect('種類・たかさ・おもさ', i.x, i.y, i.size, i.maxWidth, 'center'));
@@ -124,6 +136,10 @@ export const layoutGuides = (layout: Layout): Guide[] => {
   }
 
   const f = layout.footer;
+  if (f.illustrator) {
+    const i = f.illustrator;
+    g.push(textRect('イラストレーター', i.x, i.y, f.size, i.maxWidth, 'right'));
+  }
   g.push(
     rect(
       '下部（イラストレーター・著作権・番号）',

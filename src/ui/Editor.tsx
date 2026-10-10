@@ -110,13 +110,15 @@ export const Editor = ({ card, dispatch }: Props) => {
                     placeholder="50"
                     inputMode="numeric"
                   />
-                  <TextField
-                    label="LV"
-                    value={card.level}
-                    onChange={(level) => set({ level })}
-                    placeholder="12"
-                    inputMode="numeric"
-                  />
+                  {card.series !== 'pcg' && (
+                    <TextField
+                      label="LV"
+                      value={card.level}
+                      onChange={(level) => set({ level })}
+                      placeholder="12"
+                      inputMode="numeric"
+                    />
+                  )}
                   {evolved && (
                     <TextField
                       label="進化元"
@@ -127,6 +129,16 @@ export const Editor = ({ card, dispatch }: Props) => {
                     />
                   )}
                 </div>
+                {card.series === 'pcg' && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={card.isEx}
+                      onChange={(e) => set({ isEx: e.target.checked })}
+                    />
+                    ポケモンex
+                  </label>
+                )}
                 <TypePicker
                   label="タイプ"
                   value={card.type}
@@ -256,18 +268,20 @@ export const Editor = ({ card, dispatch }: Props) => {
               }))}
               onChange={(retreat) => set({ retreat })}
             />
-            <TextArea
-              label="ずかん"
-              value={card.pokedex}
-              onChange={(pokedex) => set({ pokedex })}
-              placeholder="ポケモン図鑑の説明文"
-            />
+            {!(card.series === 'pcg' && card.isEx) && (
+              <TextArea
+                label="ずかん"
+                value={card.pokedex}
+                onChange={(pokedex) => set({ pokedex })}
+                placeholder="ポケモン図鑑の説明文"
+              />
+            )}
           </>
         )}
 
         {tab === 'detail' && (
           <>
-            {!isTrainer && (
+            {!isTrainer && !(card.series === 'pcg' && card.isEx) && (
               <TextField
                 label="種類・たかさ・おもさ"
                 value={card.info}
@@ -356,7 +370,7 @@ export const Editor = ({ card, dispatch }: Props) => {
                 </>
               )}
             </fieldset>
-            {evolved && (
+            {evolved && card.series !== 'pcg' && (
               <ImageInput
                 label="進化前のポケモン"
                 art={card.evoArt}

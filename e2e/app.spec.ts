@@ -97,7 +97,7 @@ test('キラ加工をかけられる', async ({ page }) => {
   await expect(page.getByTestId('holo-shine')).toHaveCount(0);
 });
 
-test('e シリーズだけポケパワー・ポケボディーを設定できる', async ({ page }) => {
+test('e シリーズでポケパワー・ポケボディーを設定できる', async ({ page }) => {
   const ability = page.getByRole('group', { name: 'ポケパワー・ポケボディー' });
   await page.getByRole('tab', { name: 'わざ・効果' }).click();
   await expect(ability).toHaveCount(0);
@@ -141,4 +141,121 @@ test('レイアウト確認モードで枠と座標を表示できる', async ({
   await expect(guides).toBeVisible();
   await page.getByLabel('レイアウト確認').uncheck();
   await expect(guides).toHaveCount(0);
+});
+
+test('PCG の ex・特性の設定を保存し、他のシリーズでは ex を表示しない', async ({ page }) => {
+  await page.getByLabel('シリーズ').selectOption('pcg');
+  await expect(page.getByLabel('LV', { exact: true })).toHaveCount(0);
+  await page.getByLabel('カード名').fill('ラティオス');
+  await page.getByLabel('HP', { exact: true }).fill('100');
+  await page.getByLabel('ポケモンex', { exact: true }).check();
+  await page.getByLabel('レイアウト確認').check();
+  await expect(page.getByTestId('layout-guides').getByText('ポケモンexのルール')).toBeVisible();
+
+  await page.getByRole('tab', { name: 'わざ・効果' }).click();
+  const ability = page.getByRole('group', { name: 'ポケパワー・ポケボディー' });
+  await ability.getByLabel('種類').selectOption('pokebody');
+  await ability.getByLabel('名前', { exact: true }).fill('クリアボディー');
+  await ability.getByLabel('説明').fill('このポケモンは特殊状態にならない。');
+  await expect(page.getByLabel('ずかん')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const saved = JSON.parse(localStorage.getItem('pcigen:card:v1') ?? '{}');
+        return [saved.series, saved.isEx, saved.ability?.name];
+      }),
+    )
+    .toEqual(['pcg', true, 'クリアボディー']);
+  await page.reload();
+  await expect(page.getByLabel('シリーズ')).toHaveValue('pcg');
+  await expect(page.getByLabel('ポケモンex', { exact: true })).toBeChecked();
+  await page.getByLabel('シリーズ').selectOption('neo');
+  await expect(page.getByLabel('ポケモンex', { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId('layout-guides').getByText('ポケモンexのルール')).toHaveCount(0);
+});
+
+test('PCG の透過窓にイラストを描き、PNG と JSON を書き出せる', async ({ page }) => {
+  await page.getByLabel('シリーズ').selectOption('pcg');
+  await page.getByLabel('カード名').fill('Latios');
+  await page.getByLabel('ポケモンex', { exact: true }).check();
+  await page.getByRole('tab', { name: '画像' }).click();
+  await page
+    .getByRole('group', { name: 'イラスト', exact: true })
+    .locator('input[type=file]')
+    .setInputFiles({
+      name: 'art.svg',
+      mimeType: 'image/svg+xml',
+      buffer: Buffer.from(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect width="400" height="250" fill="#1e90ff"/></svg>',
+      ),
+    });
+  const artPixel = () =>
+    page.getByTestId('card-canvas').evaluate((element) => {
+      const canvas = element as HTMLCanvasElement;
+      return Array.from(canvas.getContext('2d')!.getImageData(400, 300, 1, 1).data);
+    });
+  await expect.poll(artPixel).toEqual([30, 144, 255, 255]);
+  for (const [scale, width, height] of [
+    ['1', 400, 560],
+    ['2', 800, 1120],
+  ] as const) {
+    await page.getByLabel('保存する画像の大きさ').selectOption(scale);
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'PNG で保存' }).click();
+    const file = await download;
+    const data = await readFile(await file.path());
+    expect(pngSize(data)).toEqual({ width, height });
+    const pixel = await page.evaluate(
+      async (src) => {
+        const img = new Image();
+        img.src = src;
+        await img.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        return Array.from(ctx.getImageData(img.width / 2, (img.height * 150) / 560, 1, 1).data);
+      },
+      `data:image/png;base64,${data.toString('base64')}`,
+    );
+    expect(pixel).toEqual([30, 144, 255, 255]);
+  }
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'JSON に書き出す' }).click();
+  const data = JSON.parse(await readFile(await (await download).path(), 'utf8'));
+  expect(data).toMatchObject({ series: 'pcg', isEx: true, name: 'Latios' });
+  await page.getByRole('tab', { name: '基本' }).click();
+  await page.getByLabel('シリーズ').selectOption('base');
+  await page.locator('input[accept="application/json,.json"]').setInputFiles({
+    name: 'card.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(data)),
+  });
+  await page.getByRole('tab', { name: '基本' }).click();
+  await expect(page.getByLabel('シリーズ')).toHaveValue('pcg');
+  await expect(page.getByLabel('ポケモンex', { exact: true })).toBeChecked();
+  await expect.poll(artPixel).toEqual([30, 144, 255, 255]);
+});
+
+test('PCG の進化ポケモンとトレーナーを切り替えられる', async ({ page }) => {
+  await page.getByLabel('シリーズ').selectOption('pcg');
+  await page.getByLabel('カードの種類').selectOption('stage1');
+  await page.getByLabel('進化元').fill('ゴース');
+  await page.getByLabel('レイアウト確認').check();
+  await expect(
+    page.getByTestId('layout-guides').getByText('進化元', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('tab', { name: '画像' }).click();
+  await expect(page.getByRole('group', { name: '進化前のポケモン' })).toHaveCount(0);
+  await page.getByRole('tab', { name: '基本' }).click();
+  await page.getByLabel('カードの種類').selectOption('trainer');
+  await expect(page.getByLabel('ポケモンex', { exact: true })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'わざ・効果' }).click();
+  await page
+    .getByLabel('効果', { exact: true })
+    .fill('自分のポケモン1匹のダメージカウンターを2個とる。');
+  await expect(page.getByRole('group', { name: 'ポケパワー・ポケボディー' })).toHaveCount(0);
+  await expect(page.getByTestId('layout-guides').getByText('効果', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('layout-guides').getByText('わざ欄')).toHaveCount(0);
 });

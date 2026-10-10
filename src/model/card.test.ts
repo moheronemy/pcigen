@@ -37,6 +37,13 @@ describe('parseCard', () => {
     expect(parseCard(JSON.parse(JSON.stringify(card)))).toEqual(card);
   });
 
+  it('PCG の ex 設定を保存でき、古いデータには追加しない', () => {
+    const card = { ...createCard(), series: 'pcg' as const, isEx: true, type: 'metal' as const };
+    expect(parseCard(JSON.parse(JSON.stringify(card)))).toEqual(card);
+    expect(parseCard({ series: 'neo' }).isEx).toBe(false);
+    expect(parseCard({ series: 'pcg', isEx: 'false' }).isEx).toBe(false);
+  });
+
   it('範囲外や型違いの値は補正する', () => {
     const card = parseCard({
       series: 'xyz',
@@ -69,9 +76,11 @@ describe('parseCard のキラ加工', () => {
 });
 
 describe('ポケパワー・ポケボディー', () => {
-  it('e シリーズのポケモンだけが持てる', () => {
+  it('e・PCG シリーズのポケモンが持てる', () => {
     expect(supportsAbility({ series: 'e', stage: 'basic' })).toBe(true);
     expect(supportsAbility({ series: 'e', stage: 'trainer' })).toBe(false);
+    expect(supportsAbility({ series: 'pcg', stage: 'stage1' })).toBe(true);
+    expect(supportsAbility({ series: 'pcg', stage: 'trainer' })).toBe(false);
     expect(supportsAbility({ series: 'neo', stage: 'stage1' })).toBe(false);
   });
 

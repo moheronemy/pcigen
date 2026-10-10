@@ -1,4 +1,4 @@
-import { ENERGY_TYPES, supportsAbility, type CardData } from '../model/card';
+import { ENERGY_TYPES, STAGE_LABELS, supportsAbility, type CardData } from '../model/card';
 
 /**
  * カード上の配置（400×560px のカード座標）。
@@ -66,12 +66,21 @@ export interface Layout {
   level?: { size: number };
   evolvesFrom?: { x: number; y: number; size: number };
   hp?: { right: number; y: number };
+  typeIcon?: IconSlot;
+  stageLabel?: { text: string; x: number; y: number; size: number };
+  exRule?: TextBox;
   info?: { x: number; y: number; size: number; maxWidth: number };
   moves?: MovesLayout;
   stats?: StatsLayout;
   pokedex?: TextBox;
   trainerText?: TextBox;
-  footer: { y: number; left: number; right: number; size: number };
+  footer: {
+    y: number;
+    left: number;
+    right: number;
+    size: number;
+    illustrator?: { x: number; y: number; maxWidth: number };
+  };
 }
 
 const typeIndex = (card: CardData) => ENERGY_TYPES.indexOf(card.type) + 1;
@@ -225,7 +234,69 @@ const ePokemon = (card: CardData): Layout => {
   };
 };
 
+/** アップロード画像から再構成した銀色の PCG ex 枠を共通で使う。 */
+const pcgCard = (card: CardData): Layout => {
+  const trainer = card.stage === 'trainer';
+  const evolved = card.stage === 'stage1' || card.stage === 'stage2';
+  const ex = !trainer && card.isEx;
+  return {
+    frame: 'pcardpcg',
+    overlays: [],
+    textColor: '#111',
+    artWindow: { x: 36, y: 60, w: 328, h: 202 },
+    name: { x: 26, y: 42, size: 23, maxWidth: trainer ? 342 : 234, align: 'left' },
+    hp: trainer ? undefined : { right: 350, y: 42 },
+    typeIcon: trainer ? undefined : { x: 356, y: 22, size: 21 },
+    stageLabel: { text: STAGE_LABELS[card.stage], x: 26, y: 274, size: 8 },
+    evolvesFrom: evolved ? { x: 94, y: 273, size: 7 } : undefined,
+    exRule: ex ? { x: 216, y: 280, w: 140, h: 18, size: 6, lineHeight: 7 } : undefined,
+    moves: trainer
+      ? undefined
+      : {
+          top: 304,
+          bottom: ex ? 494 : 466,
+          iconX: 29,
+          iconSize: 18,
+          nameX: 104,
+          nameSize: 19,
+          damageRight: 368,
+          textX: 70,
+          textWidth: 290,
+          textSize: 10,
+          ability:
+            card.ability.kind !== 'none'
+              ? { badge: card.ability.kind, badgeHeight: 17 }
+              : undefined,
+        },
+    stats: trainer
+      ? undefined
+      : {
+          labels: [
+            { text: '弱点', x: 78, y: 512 },
+            { text: '抵抗力', x: 184, y: 512 },
+            { text: 'にげる', x: 291, y: 512 },
+          ],
+          labelSize: 7,
+          weakness: { x: 80, y: 516, size: 18 },
+          resistance: { x: 183, y: 516, size: 18 },
+          resistanceValue: { x: 205, y: 529, align: 'left' },
+          retreat: { x: 285, y: 516, size: 18, step: 19 },
+        },
+    info: !trainer && !ex ? { x: 218, y: 479, size: 7, maxWidth: 292 } : undefined,
+    pokedex: !trainer && !ex ? { x: 70, y: 481, w: 292, h: 19, size: 7, lineHeight: 9 } : undefined,
+    trainerText: trainer ? { x: 70, y: 308, w: 290, h: 180, size: 11, lineHeight: 15 } : undefined,
+    footer: {
+      y: 544,
+      left: 27,
+      right: 371,
+      size: 7,
+      illustrator: { x: 367, y: 274, maxWidth: 102 },
+    },
+  };
+};
+
 export const getLayout = (card: CardData): Layout => {
+  if (card.series === 'pcg') return pcgCard(card);
   if (card.stage === 'trainer') return card.series === 'e' ? eTrainer() : baseTrainer();
   switch (card.series) {
     case 'base':
@@ -241,6 +312,6 @@ export const getLayout = (card: CardData): Layout => {
 export const requiredAssets = (layout: Layout): string[] => [
   layout.frame,
   ...layout.overlays,
-  ...(layout.moves || layout.stats ? ['sprite'] : []),
+  ...(layout.moves || layout.stats || layout.typeIcon ? ['sprite'] : []),
   ...(layout.moves?.ability ? [layout.moves.ability.badge] : []),
 ];

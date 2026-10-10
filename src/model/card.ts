@@ -1,10 +1,11 @@
-export const SERIES = ['base', 'neo', 'e'] as const;
+export const SERIES = ['base', 'neo', 'e', 'pcg'] as const;
 export type Series = (typeof SERIES)[number];
 
 export const SERIES_LABELS: Record<Series, string> = {
   base: 'ポケットモンスターカードゲーム',
   neo: 'ポケモンカード★neo',
   e: 'ポケモンカードe',
+  pcg: 'ポケモンカードゲーム（PCG）',
 };
 
 export const STAGES = ['basic', 'stage1', 'stage2', 'trainer'] as const;
@@ -74,7 +75,7 @@ export interface Holo {
   intensity: number;
 }
 
-/** ポケパワー・ポケボディー（e シリーズのみ） */
+/** ポケパワー・ポケボディー（e・PCG シリーズ） */
 export const ABILITY_KINDS = ['none', 'pokepower', 'pokebody'] as const;
 export type AbilityKind = (typeof ABILITY_KINDS)[number];
 
@@ -90,9 +91,9 @@ export interface Ability {
   text: string;
 }
 
-/** ポケパワー・ポケボディーを持てるのは e シリーズのポケモンだけ */
+/** ポケパワー・ポケボディーを持てるシリーズのポケモンか */
 export const supportsAbility = (card: Pick<CardData, 'series' | 'stage'>) =>
-  card.series === 'e' && card.stage !== 'trainer';
+  (card.series === 'e' || card.series === 'pcg') && card.stage !== 'trainer';
 
 export const MAX_MOVES = 2;
 export const MAX_RETREAT = 4;
@@ -115,6 +116,7 @@ export interface Artwork {
 
 export interface CardData {
   series: Series;
+  isEx: boolean;
   stage: Stage;
   type: EnergyType;
   name: string;
@@ -149,6 +151,7 @@ export const defaultHolo = (): Holo => ({ style: 'none', area: 'art', intensity:
 
 export const createCard = (): CardData => ({
   series: 'base',
+  isEx: false,
   stage: 'basic',
   type: 'colorless',
   name: '',
@@ -247,6 +250,7 @@ export const parseCard = (input: unknown): CardData => {
   const retreat = typeof o.retreat === 'number' ? o.retreat : 0;
   return normalizeCard({
     series: pick(SERIES, o.series, base.series),
+    isEx: typeof o.isEx === 'boolean' ? o.isEx : false,
     stage: pick(STAGES, o.stage, base.stage),
     type: isEnergyType(o.type) ? o.type : base.type,
     name: str(o.name),
